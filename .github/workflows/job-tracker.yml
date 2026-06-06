@@ -85,3 +85,14 @@ jobs:
       - name: Run email scan
         if: ${{ github.event_name == 'schedule' || inputs.run_scan == 'true' }}
         run: npm run scan
+
+      - name: Add dashboard to Actions summary
+        if: ${{ always() }}
+        run: npm run actions:dashboard
+
+      - name: Upload dashboard report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: job-tracker-dashboard
+          path: actions-output/dashboard-report.html

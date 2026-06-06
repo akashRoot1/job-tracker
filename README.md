@@ -127,6 +127,8 @@ When you open the repo on GitHub, go to **Actions -> Job Tracker -> Run workflow
   - `akashvikram98@outlook.com`
   - `akashvikram981@outlook.com`
 - Run the scanner.
+- Add a clickable dashboard summary to the completed Actions run.
+- Upload a `job-tracker-dashboard` HTML report artifact.
 
 It also runs automatically every hour.
 

@@ -14,7 +14,8 @@
     "prisma:push": "prisma db push",
     "prisma:seed": "tsx prisma/seed.ts",
     "scan": "tsx scripts/scan-worker.ts",
-    "scan:hourly": "tsx scripts/hourly-worker.ts"
+    "scan:hourly": "tsx scripts/hourly-worker.ts",
+    "actions:dashboard": "tsx scripts/actions-dashboard.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
