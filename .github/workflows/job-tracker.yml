@@ -1,0 +1,87 @@
+name: Job Tracker
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_scan:
+        description: "Run the email scanner after setup"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+  schedule:
+    - cron: "0 * * * *"
+
+jobs:
+  build-test-and-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: job_tracker
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/job_tracker?schema=public' }}
+      TOKEN_ENCRYPTION_KEY: ${{ secrets.TOKEN_ENCRYPTION_KEY || 'MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=' }}
+      DEFAULT_USER_EMAIL: ${{ vars.DEFAULT_USER_EMAIL || 'jobseeker@example.com' }}
+      TRACKED_EMAIL_IDS: ${{ vars.TRACKED_EMAIL_IDS || 'akashvikram@outlook.com,akashvikram1@outlook.com,akashvikram98@outlook.com,akashvikram981@outlook.com' }}
+      EMAIL_PROVIDER_MODE: ${{ vars.EMAIL_PROVIDER_MODE || 'mock' }}
+      APP_BASE_URL: ${{ vars.APP_BASE_URL || 'http://localhost:3000' }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      GOOGLE_REDIRECT_URI: ${{ vars.GOOGLE_REDIRECT_URI || 'http://localhost:3000/api/oauth/gmail/callback' }}
+      MICROSOFT_CLIENT_ID: ${{ secrets.MICROSOFT_CLIENT_ID }}
+      MICROSOFT_CLIENT_SECRET: ${{ secrets.MICROSOFT_CLIENT_SECRET }}
+      MICROSOFT_TENANT_ID: ${{ vars.MICROSOFT_TENANT_ID || 'common' }}
+      MICROSOFT_REDIRECT_URI: ${{ vars.MICROSOFT_REDIRECT_URI || 'http://localhost:3000/api/oauth/outlook/callback' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+
+      - name: Run classifier tests
+        run: npm test
+
+      - name: Show database mode
+        run: |
+          if [ -z "${{ secrets.DATABASE_URL }}" ]; then
+            echo "Using temporary GitHub Actions PostgreSQL. Add DATABASE_URL secret for persistent auto-updates."
+          else
+            echo "Using DATABASE_URL from GitHub Actions secrets."
+          fi
+
+      - name: Push Prisma schema to database
+        run: npm run prisma:push
+
+      - name: Seed tracked email accounts
+        run: npm run prisma:seed
+
+      - name: Build Next.js app
+        run: npm run build
+
+      - name: Run email scan
+        if: ${{ github.event_name == 'schedule' || inputs.run_scan == 'true' }}
+        run: npm run scan

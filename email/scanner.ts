@@ -77,6 +77,16 @@ export async function scanAccount(account: ConnectedEmailAccount) {
 }
 
 export async function processRawEmail(account: ConnectedEmailAccount, raw: RawEmail) {
+  const alreadySeen = await prisma.emailMessage.findUnique({
+    where: {
+      accountId_providerMessageId: {
+        accountId: account.id,
+        providerMessageId: raw.providerMessageId
+      }
+    }
+  });
+  if (alreadySeen) return "ignored";
+
   const classification = await classifyJobEmailWithAiFallback(raw.bodyText, raw.subject, raw.senderEmail);
 
   const message = await prisma.emailMessage.upsert({

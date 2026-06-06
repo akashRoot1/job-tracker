@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:push": "prisma db push",
     "prisma:seed": "tsx prisma/seed.ts",
     "scan": "tsx scripts/scan-worker.ts",
     "scan:hourly": "tsx scripts/hourly-worker.ts"

@@ -110,6 +110,47 @@ npm run scan:hourly
 
 In production, prefer a managed scheduler such as GitHub Actions cron, Render cron jobs, Railway cron, Fly Machines, AWS EventBridge, or a Kubernetes CronJob calling `POST /api/scan`.
 
+## GitHub Actions setup
+
+This repo includes `.github/workflows/job-tracker.yml`.
+
+When you open the repo on GitHub, go to **Actions -> Job Tracker -> Run workflow**. The workflow will:
+
+- Install dependencies.
+- Generate the Prisma client.
+- Run classifier tests.
+- Build the Next.js app.
+- Push the Prisma schema to your database.
+- Seed these tracked Outlook accounts:
+  - `akashvikram@outlook.com`
+  - `akashvikram1@outlook.com`
+  - `akashvikram98@outlook.com`
+  - `akashvikram981@outlook.com`
+- Run the scanner.
+
+It also runs automatically every hour.
+
+The workflow can run immediately using a temporary PostgreSQL database created inside GitHub Actions. For real auto-updates that your deployed app can see, add these GitHub Actions secrets:
+
+- `DATABASE_URL`
+- `TOKEN_ENCRYPTION_KEY`
+
+Optional secrets for real OAuth:
+
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `MICROSOFT_CLIENT_ID`
+- `MICROSOFT_CLIENT_SECRET`
+
+Optional GitHub Actions variables:
+
+- `TRACKED_EMAIL_IDS=akashvikram@outlook.com,akashvikram1@outlook.com,akashvikram98@outlook.com,akashvikram981@outlook.com`
+- `EMAIL_PROVIDER_MODE=mock`
+- `DEFAULT_USER_EMAIL=jobseeker@example.com`
+- `APP_BASE_URL=https://your-deployed-app-url`
+
+Important: GitHub Actions can update your database, but it cannot read real Outlook inboxes until each Outlook account is connected through OAuth in the running app. Until OAuth is connected, `EMAIL_PROVIDER_MODE=mock` is useful for checking that the workflow, database, classifier, and dashboard update path are working.
+
 ## Tests
 
 ```bash
